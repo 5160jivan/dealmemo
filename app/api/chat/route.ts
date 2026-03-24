@@ -4,6 +4,7 @@ import { webSearchTool } from '@/lib/tools/webSearch';
 import { fetchUrlTool } from '@/lib/tools/fetchUrl';
 import { formatMemoTool } from '@/lib/tools/formatMemo';
 import { validateChatRequest } from '@/lib/validation';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import {
   generateRequestId,
   estimateCost,
@@ -72,6 +73,31 @@ export async function POST(req: Request) {
   const requestId = generateRequestId();
   const startTime = Date.now();
 
+  // Rate limiting
+  const ip = getClientIp(req);
+  const rateLimit = await checkRateLimit(ip);
+
+  if (!rateLimit.allowed) {
+    const retryAfterSecs = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+    return new Response(
+      JSON.stringify({
+        error: 'Rate limit exceeded. You can generate 5 memos per hour.',
+        retryAfter: retryAfterSecs,
+        resetAt: new Date(rateLimit.resetAt).toISOString(),
+      }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(retryAfterSecs),
+          'X-RateLimit-Limit': String(rateLimit.limit),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.ceil(rateLimit.resetAt / 1000)),
+        },
+      }
+    );
+  }
+
   // Parse and validate request body
   let body: unknown;
   try {
@@ -98,7 +124,10 @@ export async function POST(req: Request) {
   const companyMatch = lastUserMessage?.content.match(/Generate a deal memo for: (.+)/);
   const company = companyMatch ? companyMatch[1] : 'unknown';
 
-  logMemoEvent('start', { requestId, company, startTime });
+  logMemoEvent('start', { requestId, company, startTime }, {
+    ip,
+    rateLimitRemaining: rateLimit.remaining,
+  });
 
   try {
     const result = streamText({
@@ -122,7 +151,9 @@ export async function POST(req: Request) {
         );
         logMemoEvent('complete', { requestId, company, startTime }, {
           finishReason,
-          usage,
+          promptTokens: usage?.promptTokens,
+          completionTokens: usage?.completionTokens,
+          totalTokens: usage?.totalTokens,
           estimatedCostUsd: cost,
           durationMs: Date.now() - startTime,
         });
@@ -132,6 +163,8 @@ export async function POST(req: Request) {
     return result.toDataStreamResponse({
       headers: {
         'x-request-id': requestId,
+        'X-RateLimit-Limit': String(rateLimit.limit),
+        'X-RateLimit-Remaining': String(rateLimit.remaining),
       },
     });
   } catch (err) {
