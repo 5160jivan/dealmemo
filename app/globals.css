@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-100 antialiased;
+  }
+
+  * {
+    @apply border-gray-800;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl p-6;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg
+           transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input-field {
+    @apply w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100
+           placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           transition-all duration-150;
+  }
+}
+
+/* Streaming text cursor animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: '▋';
+  @apply text-brand-400;
+  animation: blink 1s step-end infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-600;
+}
+
+/* Markdown prose inside chat */
+.prose-dark {
+  @apply prose prose-invert prose-sm max-w-none;
+}
+
+.prose-dark h1, .prose-dark h2, .prose-dark h3 {
+  @apply text-gray-100 font-semibold;
+}
+
+.prose-dark p {
+  @apply text-gray-300;
+}
+
+.prose-dark ul, .prose-dark ol {
+  @apply text-gray-300;
+}
+
+.prose-dark strong {
+  @apply text-gray-100;
+}
+
+.prose-dark code {
+  @apply bg-gray-800 text-brand-300 px-1.5 py-0.5 rounded text-xs;
+}
