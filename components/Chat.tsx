@@ -1,8 +1,9 @@
 'use client';
 
-import { useChat } from 'ai/react';
+import { useChat, type Message } from 'ai/react';
 import { useState, useRef, useEffect } from 'react';
 import MemoRenderer from './MemoRenderer';
+import AgentSteps from './AgentSteps';
 
 const EXAMPLE_COMPANIES = [
   'Stripe',
@@ -10,7 +11,7 @@ const EXAMPLE_COMPANIES = [
   'Notion',
   'Figma',
   'Vercel',
-  'Perplexity',
+  'Perplexity AI',
 ];
 
 export default function Chat() {
@@ -21,7 +22,7 @@ export default function Chat() {
     api: '/api/chat',
   });
 
-  // Auto-scroll to bottom as streaming happens
+  // Auto-scroll as streaming happens
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -29,12 +30,8 @@ export default function Chat() {
   const handleSubmit = (company: string) => {
     const name = company.trim();
     if (!name || isLoading) return;
-
     setCompanyName('');
-    append({
-      role: 'user',
-      content: `Generate a deal memo for: ${name}`,
-    });
+    append({ role: 'user', content: `Generate a deal memo for: ${name}` });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -45,6 +42,9 @@ export default function Chat() {
   };
 
   const hasMessages = messages.length > 0;
+  const lastMessage = messages[messages.length - 1];
+  const isLastMessageStreaming =
+    isLoading && lastMessage?.role === 'assistant';
 
   return (
     <div className="h-full flex flex-col max-w-5xl mx-auto w-full px-4 sm:px-6">
@@ -54,18 +54,26 @@ export default function Chat() {
           <EmptyState onExample={(company) => handleSubmit(company)} />
         )}
 
-        {messages.map((message) => (
-          <div key={message.id}>
-            {message.role === 'user' ? (
-              <UserMessage content={message.content} />
-            ) : (
-              <AssistantMessage
-                content={message.content}
-                isStreaming={isLoading && message.id === messages[messages.length - 1]?.id}
-              />
-            )}
-          </div>
-        ))}
+        {messages.map((message, idx) => {
+          const isLast = idx === messages.length - 1;
+          return (
+            <div key={message.id}>
+              {message.role === 'user' ? (
+                <UserMessage content={message.content} />
+              ) : (
+                <AssistantMessage
+                  message={message}
+                  isStreaming={isLastMessageStreaming && isLast}
+                />
+              )}
+            </div>
+          );
+        })}
+
+        {/* Show agent steps while streaming */}
+        {isLoading && (
+          <AgentSteps messages={messages} />
+        )}
 
         {error && (
           <div className="card border-red-900 bg-red-950/30">
@@ -111,7 +119,7 @@ export default function Chat() {
           </button>
         </div>
         <p className="text-xs text-gray-600 mt-2 text-center">
-          Powered by Claude · Uses training data knowledge · Streaming live
+          Powered by Claude Sonnet · Agentic research with web search · Streaming live
         </p>
       </div>
     </div>
@@ -120,7 +128,7 @@ export default function Chat() {
 
 function EmptyState({ onExample }: { onExample: (company: string) => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mb-6 shadow-lg shadow-brand-900/50">
         <span className="text-3xl">📋</span>
       </div>
@@ -128,12 +136,14 @@ function EmptyState({ onExample }: { onExample: (company: string) => void }) {
         Ready to research
       </h2>
       <p className="text-gray-500 text-sm max-w-sm mb-8">
-        Enter any startup or company name below. The AI will produce a structured
-        deal memo with market analysis, competitors, and a verdict.
+        Enter any startup name. The AI agent searches the web, reads sources,
+        and produces a structured VC-style deal memo — streamed live.
       </p>
 
-      <div className="flex flex-col gap-2 items-center">
-        <p className="text-xs text-gray-600 uppercase tracking-wider mb-1">Try an example</p>
+      <div className="w-full max-w-md space-y-3">
+        <p className="text-xs text-gray-600 uppercase tracking-wider">
+          Try an example
+        </p>
         <div className="flex flex-wrap gap-2 justify-center">
           {EXAMPLE_COMPANIES.map((company) => (
             <button
@@ -146,18 +156,28 @@ function EmptyState({ onExample }: { onExample: (company: string) => void }) {
           ))}
         </div>
       </div>
+
+      {/* Feature pills */}
+      <div className="flex flex-wrap gap-2 justify-center mt-8">
+        {['Web Search', 'URL Fetching', 'Structured Output', 'Streaming'].map((f) => (
+          <span
+            key={f}
+            className="text-xs px-2.5 py-1 bg-gray-900 border border-gray-800 rounded-full text-gray-500"
+          >
+            {f}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
 function UserMessage({ content }: { content: string }) {
-  // Extract company name from "Generate a deal memo for: X"
   const match = content.match(/Generate a deal memo for: (.+)/);
   const company = match ? match[1] : content;
-
   return (
     <div className="flex justify-end">
-      <div className="max-w-sm bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-sm font-medium">
+      <div className="max-w-sm bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-sm font-medium shadow-lg">
         <span className="text-brand-200 text-xs block mb-1">Deal memo request</span>
         {company}
       </div>
@@ -166,10 +186,10 @@ function UserMessage({ content }: { content: string }) {
 }
 
 function AssistantMessage({
-  content,
+  message,
   isStreaming,
 }: {
-  content: string;
+  message: Message;
   isStreaming: boolean;
 }) {
   return (
@@ -187,7 +207,7 @@ function AssistantMessage({
             </span>
           )}
         </div>
-        <MemoRenderer content={content} isStreaming={isStreaming} />
+        <MemoRenderer content={message.content} isStreaming={isStreaming} />
       </div>
     </div>
   );
@@ -201,7 +221,14 @@ function LoadingSpinner() {
       fill="none"
       viewBox="0 0 24 24"
     >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
       <path
         className="opacity-75"
         fill="currentColor"
@@ -213,7 +240,12 @@ function LoadingSpinner() {
 
 function SearchIcon() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
