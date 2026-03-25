@@ -20,32 +20,28 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="h-full flex flex-col">
-        {/* Header */}
-        <header className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+        <header className="border-b border-stone-200/80 bg-white/75 backdrop-blur-lg sticky top-0 z-50 shadow-sm shadow-stone-200/40">
+          <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 h-14 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center
+                  shadow-md shadow-orange-400/35"
+              >
                 <span className="text-white text-xs font-bold">D</span>
               </div>
-              <span className="font-semibold text-gray-100">DealMemo</span>
-              <span className="badge bg-brand-900 text-brand-300">Beta</span>
+              <span className="font-semibold text-slate-900 tracking-tight">DealMemo</span>
+              <span className="badge bg-amber-100 text-amber-800 border border-amber-200/80 text-[10px]">
+                Beta
+              </span>
             </div>
-            <nav className="flex items-center gap-4 text-sm text-gray-400">
-              <span>Powered by Claude</span>
-            </nav>
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-hidden">
-          {children}
-        </main>
+        <main className="flex-1 overflow-hidden">{children}</main>
 
-        {/* Footer */}
-        <footer className="border-t border-gray-800 py-3">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between text-xs text-gray-600">
-            <span>DealMemo — AI research agent</span>
-            <span>Built with Vercel AI SDK + Claude</span>
+        <footer className="border-t border-stone-200/80 py-4 bg-white/40">
+          <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 text-center text-[11px] text-slate-500">
+            DealMemo — research memos for founders and investors
           </div>
         </footer>
       </body>

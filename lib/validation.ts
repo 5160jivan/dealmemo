@@ -118,7 +118,7 @@ export function validateChatRequest(body: unknown): {
       return { valid: false, error: 'Message content must be a string' };
     }
 
-    if (m.content.length > 10_000) {
+    if (m.role === 'user' && m.content.length > 10_000) {
       return { valid: false, error: 'Message content too long (max 10,000 chars)' };
     }
   }

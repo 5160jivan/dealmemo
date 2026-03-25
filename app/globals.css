@@ -2,25 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color-scheme: light;
   }
 
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+    @apply text-slate-800 antialiased min-h-full;
+    background-color: #faf8f5;
+    background-image:
+      radial-gradient(ellipse 120% 70% at 50% -25%, rgba(251, 191, 36, 0.18), transparent 55%),
+      radial-gradient(ellipse 80% 50% at 100% 0%, rgba(34, 211, 238, 0.12), transparent 45%),
+      radial-gradient(ellipse 60% 40% at 0% 100%, rgba(251, 113, 133, 0.08), transparent 50%);
   }
 
   * {
-    @apply border-gray-800;
+    @apply border-stone-200/90;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-gray-900 border border-gray-800 rounded-xl p-6;
+    @apply bg-white border border-stone-200/90 rounded-xl p-6 shadow-sm shadow-stone-200/50;
   }
 
   .badge {
@@ -28,18 +34,20 @@
   }
 
   .btn-primary {
-    @apply bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg
-           transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-white font-semibold text-base px-6 sm:px-10 py-3.5 sm:py-4 min-h-[3.25rem] rounded-2xl transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600
+           hover:from-amber-400 hover:via-orange-400 hover:to-orange-500
+           shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40;
   }
 
   .input-field {
-    @apply w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100
-           placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
-           transition-all duration-150;
+    @apply w-full min-w-0 bg-white border border-stone-200 rounded-2xl px-5 sm:px-6 py-3.5 sm:py-4 text-base text-slate-800
+           placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/70
+           shadow-sm transition-all duration-200;
   }
 }
 
-/* Streaming text cursor animation */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -47,49 +55,47 @@
 
 .streaming-cursor::after {
   content: '▋';
-  @apply text-brand-400;
+  @apply text-amber-500;
   animation: blink 1s step-end infinite;
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-900;
+  @apply bg-stone-100;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-700 rounded-full;
+  @apply bg-stone-300 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-600;
+  @apply bg-stone-400;
 }
 
-/* Markdown prose inside chat */
 .prose-dark {
-  @apply prose prose-invert prose-sm max-w-none;
+  @apply prose prose-stone prose-sm max-w-none;
 }
 
 .prose-dark h1, .prose-dark h2, .prose-dark h3 {
-  @apply text-gray-100 font-semibold;
+  @apply text-stone-900 font-semibold;
 }
 
 .prose-dark p {
-  @apply text-gray-300;
+  @apply text-stone-600;
 }
 
 .prose-dark ul, .prose-dark ol {
-  @apply text-gray-300;
+  @apply text-stone-600;
 }
 
 .prose-dark strong {
-  @apply text-gray-100;
+  @apply text-stone-900;
 }
 
 .prose-dark code {
-  @apply bg-gray-800 text-brand-300 px-1.5 py-0.5 rounded text-xs;
+  @apply bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded text-xs border border-amber-100;
 }

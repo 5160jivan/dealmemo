@@ -43,7 +43,7 @@ export function estimateCost(promptTokens: number, completionTokens: number): nu
  * Always logs to console in a structured format.
  */
 export function logMemoEvent(
-  event: 'start' | 'complete' | 'error',
+  event: 'start' | 'complete' | 'error' | 'cache_hit',
   meta: TraceMetadata,
   extra?: Record<string, unknown>
 ) {

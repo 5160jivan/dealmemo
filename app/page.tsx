@@ -3,19 +3,20 @@ import Chat from '@/components/Chat';
 export default function Home() {
   return (
     <div className="h-full flex flex-col">
-      {/* Hero section */}
-      <div className="text-center py-8 px-4 border-b border-gray-800/50">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-2">
-          Startup Research Agent
-        </h1>
-        <p className="text-gray-400 text-sm sm:text-base max-w-xl mx-auto">
-          Enter a company name and get an institutional-quality deal memo in seconds.
-          Powered by Claude — streaming live as it thinks.
-        </p>
+      <div className="border-b border-stone-200/60 bg-white/30">
+        <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-8 text-center">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-2">
+            <span className="bg-gradient-to-r from-amber-600 via-orange-500 to-cyan-600 bg-clip-text text-transparent">
+              Startup research
+            </span>
+          </h1>
+          <p className="text-slate-600 text-sm sm:text-base max-w-3xl mx-auto leading-relaxed">
+            One company name → a structured deal memo, streamed as it&apos;s written.
+          </p>
+        </div>
       </div>
 
-      {/* Chat interface */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0">
         <Chat />
       </div>
     </div>
