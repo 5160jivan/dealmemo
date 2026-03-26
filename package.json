@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.9",
+    "@clerk/nextjs": "^7.0.7",
     "@tavily/core": "^0.7.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
