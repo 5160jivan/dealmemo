@@ -189,6 +189,18 @@ export default function Chat() {
                     {session.company}
                   </span>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {session.memoId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(`${window.location.origin}/memo/${session.memoId}`);
+                        }}
+                        className="p-1 text-slate-400 hover:text-sky-600 transition-colors"
+                        title="Copy share link"
+                      >
+                        <ShareIcon />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -333,11 +345,23 @@ export default function Chat() {
 }
 
 function HistoricalSession({ session }: { session: Session }) {
-  const assistantMsg = [...session.messages].reverse().find((m) => m.role === 'assistant');
+  const content =
+    session.text ??
+    [...session.messages].reverse().find((m) => m.role === 'assistant')?.content ??
+    '';
+  if (!content) {
+    return (
+      <div className="flex justify-center w-full">
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-20 text-slate-400 text-sm">
+          Loading memo…
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex justify-center w-full">
       <div className="w-full max-w-5xl mx-auto">
-        <MemoRenderer content={assistantMsg?.content ?? ''} isStreaming={false} />
+        <MemoRenderer content={content} isStreaming={false} />
       </div>
     </div>
   );
@@ -492,6 +516,14 @@ function CloseIcon() {
   return (
     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
     </svg>
   );
 }
