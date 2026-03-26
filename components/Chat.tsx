@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { UserAvatar } from '@clerk/nextjs';
 import MemoRenderer from './MemoRenderer';
 import AgentSteps from './AgentSteps';
+import type { MemoSummary } from '@/lib/memoStore';
 
 const EXAMPLE_COMPANIES = [
   'Stripe',
@@ -23,8 +24,11 @@ const PILL_ACCENTS = [
 
 interface Session {
   id: string;
+  memoId?: string;     // server-assigned ID for share link
   company: string;
   messages: Message[];
+  text?: string;       // full text for server-loaded sessions
+  createdAt?: string;
 }
 
 export default function Chat() {
@@ -39,6 +43,36 @@ export default function Chat() {
   const { messages, isLoading, append, error, setMessages } = useChat({
     api: '/api/chat',
   });
+
+  const fetchAndMergeHistory = async () => {
+    try {
+      const res = await fetch('/api/memos');
+      if (!res.ok) return;
+      const summaries: MemoSummary[] = await res.json();
+      setSessions((prev) => {
+        const existingMemoIds = new Set(prev.map((s) => s.memoId).filter(Boolean));
+        const incoming = summaries
+          .filter((s) => !existingMemoIds.has(s.id))
+          .map((s): Session => ({
+            id: s.id,
+            memoId: s.id,
+            company: s.company,
+            messages: [],
+            createdAt: s.createdAt,
+          }));
+        if (incoming.length === 0) return prev;
+        // Merge: keep live sessions at top, append server sessions not already present
+        return [...prev, ...incoming];
+      });
+    } catch {
+      // silent — user may not be authed or Upstash not configured
+    }
+  };
+
+  useEffect(() => {
+    fetchAndMergeHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!viewingSession) {
@@ -68,6 +102,8 @@ export default function Chat() {
       return [entry, ...prev];
     });
     setSidebarOpen(true);
+    // Refresh from server to get memoId for the session we just generated
+    fetchAndMergeHistory();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
@@ -126,11 +162,28 @@ export default function Chat() {
                       ? 'bg-amber-50/80 border-l-2 border-amber-400'
                       : 'hover:bg-white/70 border-l-2 border-transparent'
                   }`}
-                  onClick={() =>
-                    session.id === currentSessionIdRef.current
-                      ? setViewingSession(null)   // current session → back to live view
-                      : setViewingSession(session)
-                  }
+                  onClick={async () => {
+                    if (session.id === currentSessionIdRef.current) {
+                      setViewingSession(null);
+                      return;
+                    }
+                    // Server-only session: fetch full text on demand
+                    if (session.memoId && !session.text && session.messages.length === 0) {
+                      try {
+                        const res = await fetch(`/api/memo/${session.memoId}`);
+                        if (res.ok) {
+                          const data = await res.json();
+                          const loaded = { ...session, text: data.text as string };
+                          setSessions((prev) =>
+                            prev.map((s) => (s.id === session.id ? loaded : s))
+                          );
+                          setViewingSession(loaded);
+                          return;
+                        }
+                      } catch { /* fall through */ }
+                    }
+                    setViewingSession(session);
+                  }}
                 >
                   <span className="flex-1 text-sm font-medium text-slate-700 truncate">
                     {session.company}
