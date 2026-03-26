@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { UserAvatar } from '@clerk/nextjs';
 import MemoRenderer from './MemoRenderer';
 import AgentSteps from './AgentSteps';
+import ExportPptxButton from './ExportPptxButton';
 import type { MemoSummary } from '@/lib/memoStore';
 
 const EXAMPLE_COMPANIES = [
@@ -190,16 +191,21 @@ export default function Chat() {
                   </span>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {session.memoId && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(`${window.location.origin}/memo/${session.memoId}`);
-                        }}
-                        className="p-1 text-slate-400 hover:text-sky-600 transition-colors"
-                        title="Copy share link"
-                      >
-                        <ShareIcon />
-                      </button>
+                      <>
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <ExportPptxButton memoId={session.memoId} company={session.company} variant="icon" />
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(`${window.location.origin}/memo/${session.memoId}`);
+                          }}
+                          className="p-1 text-slate-400 hover:text-sky-600 transition-colors"
+                          title="Copy share link"
+                        >
+                          <ShareIcon />
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={(e) => {
