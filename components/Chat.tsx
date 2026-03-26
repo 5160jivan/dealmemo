@@ -53,9 +53,27 @@ export default function Chat() {
       if (!res.ok) return;
       const summaries: MemoSummary[] = await res.json();
       setSessions((prev) => {
-        const existingMemoIds = new Set(prev.map((s) => s.memoId).filter(Boolean));
+        const claimedServerIds = new Set(prev.map((s) => s.memoId).filter(Boolean));
+
+        // First pass: assign memoIds to local sessions that don't have one yet
+        // by matching company name against server summaries
+        const updated = prev.map((s) => {
+          if (s.memoId) return s;
+          const match = summaries.find(
+            (srv) =>
+              !claimedServerIds.has(srv.id) &&
+              srv.company.toLowerCase().trim() === s.company.toLowerCase().trim()
+          );
+          if (match) {
+            claimedServerIds.add(match.id);
+            return { ...s, memoId: match.id, status: match.status };
+          }
+          return s;
+        });
+
+        // Second pass: add server sessions not yet represented locally
         const incoming = summaries
-          .filter((s) => !existingMemoIds.has(s.id))
+          .filter((s) => !claimedServerIds.has(s.id))
           .map((s): Session => ({
             id: s.id,
             memoId: s.id,
@@ -64,9 +82,9 @@ export default function Chat() {
             createdAt: s.createdAt,
             status: s.status,
           }));
-        if (incoming.length === 0) return prev;
-        // Merge: keep live sessions at top, append server sessions not already present
-        return [...prev, ...incoming];
+
+        if (incoming.length === 0 && updated.every((s, i) => s === prev[i])) return prev;
+        return [...updated, ...incoming];
       });
     } catch {
       // silent — user may not be authed or Upstash not configured
@@ -139,6 +157,8 @@ export default function Chat() {
   const lastMessage = messages[messages.length - 1];
   const isLastMessageStreaming = isLoading && lastMessage?.role === 'assistant';
   const showSidebar = sessions.length > 0 && sidebarOpen;
+  const currentMemoId = sessions.find((s) => s.id === currentSessionIdRef.current)?.memoId;
+  const currentCompany = sessions.find((s) => s.id === currentSessionIdRef.current)?.company ?? '';
 
   return (
     <div className="h-full flex overflow-hidden">
@@ -261,6 +281,9 @@ export default function Chat() {
             <span className="text-amber-700 font-medium">
               Viewing: {viewingSession.company}
             </span>
+            {viewingSession.memoId && (
+              <ExportPptxButton memoId={viewingSession.memoId} company={viewingSession.company} />
+            )}
             <button
               onClick={() => setViewingSession(null)}
               className="ml-auto text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2 transition-colors"
@@ -274,6 +297,13 @@ export default function Chat() {
             >
               Re-research
             </button>
+          </div>
+        )}
+
+        {/* Live memo toolbar — shown when current research is done */}
+        {!viewingSession && !isLoading && currentMemoId && (
+          <div className="shrink-0 flex items-center gap-3 px-5 py-2 border-b border-stone-200/60 bg-white/60">
+            <ExportPptxButton memoId={currentMemoId} company={currentCompany} />
           </div>
         )}
 
