@@ -18,6 +18,7 @@ import {
   logMemoEvent,
   getTelemetryConfig,
 } from '@/lib/observability';
+import { saveMemo } from '@/lib/memoStore';
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -222,6 +223,11 @@ export async function POST(req: Request) {
           text.length >= 80
         ) {
           await setCachedMemo(memoCacheKey, text);
+        }
+        if (userId && finishReason === 'stop' && text && text.length >= 80 && company !== 'unknown') {
+          await saveMemo(userId, company, text).catch((err) =>
+            console.error('[MemoStore] save error:', err)
+          );
         }
       },
     });

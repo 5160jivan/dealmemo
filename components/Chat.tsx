@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { UserAvatar } from '@clerk/nextjs';
 import MemoRenderer from './MemoRenderer';
 import AgentSteps from './AgentSteps';
+import type { MemoSummary } from '@/lib/memoStore';
 
 const EXAMPLE_COMPANIES = [
   'Stripe',
@@ -23,8 +24,11 @@ const PILL_ACCENTS = [
 
 interface Session {
   id: string;
+  memoId?: string;     // server-assigned ID for share link
   company: string;
   messages: Message[];
+  text?: string;       // full text for server-loaded sessions
+  createdAt?: string;
 }
 
 export default function Chat() {
@@ -39,6 +43,36 @@ export default function Chat() {
   const { messages, isLoading, append, error, setMessages } = useChat({
     api: '/api/chat',
   });
+
+  const fetchAndMergeHistory = async () => {
+    try {
+      const res = await fetch('/api/memos');
+      if (!res.ok) return;
+      const summaries: MemoSummary[] = await res.json();
+      setSessions((prev) => {
+        const existingMemoIds = new Set(prev.map((s) => s.memoId).filter(Boolean));
+        const incoming = summaries
+          .filter((s) => !existingMemoIds.has(s.id))
+          .map((s): Session => ({
+            id: s.id,
+            memoId: s.id,
+            company: s.company,
+            messages: [],
+            createdAt: s.createdAt,
+          }));
+        if (incoming.length === 0) return prev;
+        // Merge: keep live sessions at top, append server sessions not already present
+        return [...prev, ...incoming];
+      });
+    } catch {
+      // silent — user may not be authed or Upstash not configured
+    }
+  };
+
+  useEffect(() => {
+    fetchAndMergeHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!viewingSession) {
@@ -68,6 +102,8 @@ export default function Chat() {
       return [entry, ...prev];
     });
     setSidebarOpen(true);
+    // Refresh from server to get memoId for the session we just generated
+    fetchAndMergeHistory();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
@@ -126,16 +162,45 @@ export default function Chat() {
                       ? 'bg-amber-50/80 border-l-2 border-amber-400'
                       : 'hover:bg-white/70 border-l-2 border-transparent'
                   }`}
-                  onClick={() =>
-                    session.id === currentSessionIdRef.current
-                      ? setViewingSession(null)   // current session → back to live view
-                      : setViewingSession(session)
-                  }
+                  onClick={async () => {
+                    if (session.id === currentSessionIdRef.current) {
+                      setViewingSession(null);
+                      return;
+                    }
+                    // Server-only session: fetch full text on demand
+                    if (session.memoId && !session.text && session.messages.length === 0) {
+                      try {
+                        const res = await fetch(`/api/memo/${session.memoId}`);
+                        if (res.ok) {
+                          const data = await res.json();
+                          const loaded = { ...session, text: data.text as string };
+                          setSessions((prev) =>
+                            prev.map((s) => (s.id === session.id ? loaded : s))
+                          );
+                          setViewingSession(loaded);
+                          return;
+                        }
+                      } catch { /* fall through */ }
+                    }
+                    setViewingSession(session);
+                  }}
                 >
                   <span className="flex-1 text-sm font-medium text-slate-700 truncate">
                     {session.company}
                   </span>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {session.memoId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(`${window.location.origin}/memo/${session.memoId}`);
+                        }}
+                        className="p-1 text-slate-400 hover:text-sky-600 transition-colors"
+                        title="Copy share link"
+                      >
+                        <ShareIcon />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -280,11 +345,23 @@ export default function Chat() {
 }
 
 function HistoricalSession({ session }: { session: Session }) {
-  const assistantMsg = [...session.messages].reverse().find((m) => m.role === 'assistant');
+  const content =
+    session.text ??
+    [...session.messages].reverse().find((m) => m.role === 'assistant')?.content ??
+    '';
+  if (!content) {
+    return (
+      <div className="flex justify-center w-full">
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-20 text-slate-400 text-sm">
+          Loading memo…
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex justify-center w-full">
       <div className="w-full max-w-5xl mx-auto">
-        <MemoRenderer content={assistantMsg?.content ?? ''} isStreaming={false} />
+        <MemoRenderer content={content} isStreaming={false} />
       </div>
     </div>
   );
@@ -439,6 +516,14 @@ function CloseIcon() {
   return (
     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
     </svg>
   );
 }
