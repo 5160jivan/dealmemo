@@ -67,6 +67,14 @@ Identical company lookups are served from cache instead of re-running the full r
 ### Rate limiting
 7 memos per hour per IP address. Uses Upstash Redis in production with an in-memory fallback for local dev. Returns `429` with a `Retry-After` header when exceeded.
 
+### LLM tracing with Langfuse
+Every memo generation is traced end-to-end via OpenTelemetry:
+- **Full trace per request** — each `streamText` call is captured as a Langfuse trace (`deal-memo-agent`) with `requestId` and company as metadata
+- **Tool call spans** — every agent step (web_search, fetch_url, format_memo) appears as a child span with latency and inputs/outputs
+- **Token counts & cost** — prompt tokens, completion tokens, and estimated USD cost per trace
+- Powered by `@vercel/otel` + `langfuse-vercel` registered in `instrumentation.ts`
+- Configure via `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASEURL` — omitting these silently disables tracing
+
 ### Input validation & safety
 All incoming messages are sanitised: role allowlist, injection pattern detection, per-message length cap on user content.
 
@@ -84,7 +92,8 @@ All incoming messages are sanitised: role allowlist, injection pattern detection
 | Styling | Tailwind CSS |
 | Rate limiting | Upstash Redis (in-memory fallback for dev) |
 | Memo cache | Upstash Redis (in-memory fallback for dev) |
-| Observability | Structured logging + Vercel AI telemetry |
+| Observability | Structured logging + Vercel AI SDK telemetry |
+| LLM tracing | Langfuse via `@vercel/otel` + `langfuse-vercel` |
 
 ## Getting started
 
@@ -114,6 +123,11 @@ TAVILY_API_KEY=tvly-...
 # Optional — persistent rate limiting + memo cache (Upstash Redis)
 UPSTASH_REDIS_REST_URL=https://...upstash.io
 UPSTASH_REDIS_REST_TOKEN=...
+
+# Optional — Langfuse LLM tracing (get keys at langfuse.com)
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASEURL=https://us.cloud.langfuse.com
 
 # Optional — disable memo cache
 # DEALMEMO_MEMO_CACHE=0
