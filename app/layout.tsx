@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { ClerkProvider, GoogleOneTap, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -50,12 +50,17 @@ export default function RootLayout({
                   </SignUpButton>
                 </Show>
                 <Show when="signed-in">
-                  <UserButton appearance={{ elements: { avatarBox: 'w-8 h-8' } }} />
+                  <UserButton
+                    userProfileUrl="/user-profile"
+                    userProfileMode="navigation"
+                    appearance={{ elements: { avatarBox: 'w-8 h-8' } }}
+                  />
                 </Show>
               </div>
             </div>
           </header>
 
+          <GoogleOneTap />
           <main className="flex-1 overflow-hidden">{children}</main>
 
           <footer className="border-t border-stone-200/80 py-4 bg-white/40">

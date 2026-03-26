@@ -2,6 +2,7 @@
 
 import { useChat, type Message } from 'ai/react';
 import { useState, useRef, useEffect } from 'react';
+import { UserAvatar } from '@clerk/nextjs';
 import MemoRenderer from './MemoRenderer';
 import AgentSteps from './AgentSteps';
 
@@ -341,10 +342,16 @@ function UserMessage({ content }: { content: string }) {
   const company = match ? match[1] : content;
   return (
     <div className="flex justify-center mb-2 w-full">
-      <div className="max-w-xl w-full text-center rounded-2xl border border-stone-200 bg-white/90 px-6 py-4 text-sm sm:text-base text-slate-700 shadow-sm shadow-stone-200/60">
-        <span className="text-[10px] uppercase tracking-widest text-amber-700/80 block mb-1 font-medium">
-          Request
-        </span>
+      <div className="max-w-xl w-full rounded-2xl border border-stone-200 bg-white/90 px-6 py-4 text-sm sm:text-base text-slate-700 shadow-sm shadow-stone-200/60">
+        <div className="flex items-center gap-2.5 mb-2">
+          <UserAvatar
+            appearance={{ elements: { avatarBox: 'w-5 h-5' } }}
+            rounded
+          />
+          <span className="text-[10px] uppercase tracking-widest text-amber-700/80 font-medium">
+            Request
+          </span>
+        </div>
         <span className="font-semibold text-slate-900">{company}</span>
       </div>
     </div>
