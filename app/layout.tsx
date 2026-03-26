@@ -38,6 +38,14 @@ export default function RootLayout({
                 </span>
               </Link>
               <div className="flex items-center gap-2">
+                <Show when="signed-in">
+                  <Link
+                    href="/pipeline"
+                    className="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors"
+                  >
+                    Pipeline
+                  </Link>
+                </Show>
                 <Show when="signed-out">
                   <SignInButton mode="modal">
                     <button className="text-sm font-medium text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">

@@ -18,6 +18,7 @@ import {
   logMemoEvent,
   getTelemetryConfig,
 } from '@/lib/observability';
+import { parseVerdictFromText } from '@/lib/parseVerdict';
 import { saveMemo } from '@/lib/memoStore';
 
 // Allow streaming responses up to 60 seconds
@@ -225,7 +226,8 @@ export async function POST(req: Request) {
           await setCachedMemo(memoCacheKey, text);
         }
         if (userId && finishReason === 'stop' && text && text.length >= 80 && company !== 'unknown') {
-          await saveMemo(userId, company, text).catch((err) =>
+          const initialStatus = parseVerdictFromText(text);
+          await saveMemo(userId, company, text, initialStatus).catch((err) =>
             console.error('[MemoStore] save error:', err)
           );
         }
