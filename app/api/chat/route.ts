@@ -3,6 +3,7 @@ import { streamText } from 'ai';
 import { webSearchTool } from '@/lib/tools/webSearch';
 import { fetchUrlTool } from '@/lib/tools/fetchUrl';
 import { formatMemoTool } from '@/lib/tools/formatMemo';
+import { auth } from '@clerk/nextjs/server';
 import { validateChatRequest } from '@/lib/validation';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import {
@@ -95,7 +96,10 @@ Rules for the JSON:
 export async function POST(req: Request) {
   const requestId = generateRequestId();
   const startTime = Date.now();
+  const { userId } = await auth();
+  // Use userId for rate limiting when authed (more accurate than IP)
   const ip = getClientIp(req);
+  const rateLimitKey = userId ?? ip;
 
   const cacheDisabled =
     process.env.DEALMEMO_MEMO_CACHE === '0' ||
@@ -154,7 +158,7 @@ export async function POST(req: Request) {
   }
 
   // Rate limiting (only for fresh research)
-  const rateLimit = await checkRateLimit(ip);
+  const rateLimit = await checkRateLimit(rateLimitKey);
 
   if (!rateLimit.allowed) {
     const retryAfterSecs = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);

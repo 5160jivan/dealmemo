@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
+import HeaderAuth from '@/components/HeaderAuth';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,6 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+    <ClerkProvider>
     <html lang="en" className="h-full">
       <body className="h-full flex flex-col">
         <header className="border-b border-stone-200/80 bg-white/75 backdrop-blur-lg sticky top-0 z-50 shadow-sm shadow-stone-200/40">
@@ -34,6 +37,7 @@ export default function RootLayout({
                 Beta
               </span>
             </div>
+            <HeaderAuth />
           </div>
         </header>
 
@@ -46,5 +50,6 @@ export default function RootLayout({
         </footer>
       </body>
     </html>
+    </ClerkProvider>
   );
 }
