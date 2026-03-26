@@ -166,7 +166,7 @@ export async function POST(req: Request) {
     const retryAfterSecs = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
     return new Response(
       JSON.stringify({
-        error: 'Rate limit exceeded. You can generate 5 memos per hour.',
+        error: 'Rate limit exceeded. You can generate 7 memos per hour.',
         retryAfter: retryAfterSecs,
         resetAt: new Date(rateLimit.resetAt).toISOString(),
       }),

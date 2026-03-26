@@ -4,10 +4,10 @@
  * Uses Upstash Redis when configured (production).
  * Falls back to in-memory limiting for local dev.
  *
- * Limits: 5 memos per hour per IP address.
+ * Limits: 7 memos per hour per IP address.
  */
 
-const REQUESTS_PER_HOUR = 5;
+const REQUESTS_PER_HOUR = 7;
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour in ms
 
 // In-memory fallback for local dev (not suitable for multi-instance prod)
