@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
-import HeaderAuth from '@/components/HeaderAuth';
+import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,36 +19,52 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
     <html lang="en" className="h-full">
       <body className="h-full flex flex-col">
-        <header className="border-b border-stone-200/80 bg-white/75 backdrop-blur-lg sticky top-0 z-50 shadow-sm shadow-stone-200/40">
-          <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center
-                  shadow-md shadow-orange-400/35"
-              >
-                <span className="text-white text-xs font-bold">D</span>
+        <ClerkProvider>
+          <header className="border-b border-stone-200/80 bg-white/75 backdrop-blur-lg sticky top-0 z-50 shadow-sm shadow-stone-200/40">
+            <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 h-14 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center
+                    shadow-md shadow-orange-400/35"
+                >
+                  <span className="text-white text-xs font-bold">D</span>
+                </div>
+                <span className="font-semibold text-slate-900 tracking-tight">DealMemo</span>
+                <span className="badge bg-amber-100 text-amber-800 border border-amber-200/80 text-[10px]">
+                  Beta
+                </span>
               </div>
-              <span className="font-semibold text-slate-900 tracking-tight">DealMemo</span>
-              <span className="badge bg-amber-100 text-amber-800 border border-amber-200/80 text-[10px]">
-                Beta
-              </span>
+              <div className="flex items-center gap-2">
+                <Show when="signed-out">
+                  <SignInButton mode="modal">
+                    <button className="text-sm font-medium text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">
+                      Sign in
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-lg transition-colors">
+                      Sign up
+                    </button>
+                  </SignUpButton>
+                </Show>
+                <Show when="signed-in">
+                  <UserButton appearance={{ elements: { avatarBox: 'w-8 h-8' } }} />
+                </Show>
+              </div>
             </div>
-            <HeaderAuth />
-          </div>
-        </header>
+          </header>
 
-        <main className="flex-1 overflow-hidden">{children}</main>
+          <main className="flex-1 overflow-hidden">{children}</main>
 
-        <footer className="border-t border-stone-200/80 py-4 bg-white/40">
-          <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 text-center text-[11px] text-slate-500">
-            DealMemo — research memos for founders and investors
-          </div>
-        </footer>
+          <footer className="border-t border-stone-200/80 py-4 bg-white/40">
+            <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 text-center text-[11px] text-slate-500">
+              DealMemo — research memos for founders and investors
+            </div>
+          </footer>
+        </ClerkProvider>
       </body>
     </html>
-    </ClerkProvider>
   );
 }
