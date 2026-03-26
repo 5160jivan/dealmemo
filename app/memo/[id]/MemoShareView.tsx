@@ -1,6 +1,7 @@
 'use client';
 
 import MemoRenderer from '@/components/MemoRenderer';
+import ExportPptxButton from '@/components/ExportPptxButton';
 import Link from 'next/link';
 import type { MemoRecord } from '@/lib/memoStore';
 
@@ -20,12 +21,15 @@ export default function MemoShareView({ memo }: { memo: MemoRecord }) {
             <h1 className="text-2xl font-semibold text-slate-900">{memo.company}</h1>
             <p className="text-sm text-slate-500 mt-0.5">Generated {date}</p>
           </div>
-          <Link
-            href="/"
-            className="text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded-lg transition-colors"
-          >
-            Research a company
-          </Link>
+          <div className="flex items-center gap-2">
+            <ExportPptxButton memoId={memo.id} company={memo.company} />
+            <Link
+              href="/"
+              className="text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded-lg transition-colors"
+            >
+              Research a company
+            </Link>
+          </div>
         </div>
         <MemoRenderer content={memo.text} isStreaming={false} />
       </div>

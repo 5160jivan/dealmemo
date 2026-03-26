@@ -5,7 +5,9 @@ import { useState, useRef, useEffect } from 'react';
 import { UserAvatar } from '@clerk/nextjs';
 import MemoRenderer from './MemoRenderer';
 import AgentSteps from './AgentSteps';
-import type { MemoSummary } from '@/lib/memoStore';
+import ExportPptxButton from './ExportPptxButton';
+import type { MemoSummary, DealStatus } from '@/lib/memoStore';
+import { STATUS_LABELS } from '@/lib/memoStore';
 
 const EXAMPLE_COMPANIES = [
   'Stripe',
@@ -24,11 +26,12 @@ const PILL_ACCENTS = [
 
 interface Session {
   id: string;
-  memoId?: string;     // server-assigned ID for share link
+  memoId?: string;
   company: string;
   messages: Message[];
-  text?: string;       // full text for server-loaded sessions
+  text?: string;
   createdAt?: string;
+  status?: DealStatus;
 }
 
 export default function Chat() {
@@ -59,6 +62,7 @@ export default function Chat() {
             company: s.company,
             messages: [],
             createdAt: s.createdAt,
+            status: s.status,
           }));
         if (incoming.length === 0) return prev;
         // Merge: keep live sessions at top, append server sessions not already present
@@ -188,18 +192,26 @@ export default function Chat() {
                   <span className="flex-1 text-sm font-medium text-slate-700 truncate">
                     {session.company}
                   </span>
+                  {session.status && session.status !== 'unreviewed' && (
+                    <StatusDot status={session.status} />
+                  )}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {session.memoId && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(`${window.location.origin}/memo/${session.memoId}`);
-                        }}
-                        className="p-1 text-slate-400 hover:text-sky-600 transition-colors"
-                        title="Copy share link"
-                      >
-                        <ShareIcon />
-                      </button>
+                      <>
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <ExportPptxButton memoId={session.memoId} company={session.company} variant="icon" />
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(`${window.location.origin}/memo/${session.memoId}`);
+                          }}
+                          className="p-1 text-slate-400 hover:text-sky-600 transition-colors"
+                          title="Copy share link"
+                        >
+                          <ShareIcon />
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={(e) => {
@@ -517,6 +529,23 @@ function CloseIcon() {
     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
+  );
+}
+
+const STATUS_DOT_COLORS: Record<DealStatus, string> = {
+  invested: 'bg-green-500',
+  buy:      'bg-emerald-500',
+  watch:    'bg-amber-400',
+  pass:     'bg-red-400',
+  unreviewed: 'bg-slate-300',
+};
+
+function StatusDot({ status }: { status: DealStatus }) {
+  return (
+    <span
+      className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[status]}`}
+      title={STATUS_LABELS[status]}
+    />
   );
 }
 
