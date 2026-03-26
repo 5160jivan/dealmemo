@@ -32,12 +32,27 @@ The agent outputs a structured `dealmemo-finance` JSON block embedded in the mem
 
 All values are sourced from public press and filings; estimates are clearly flagged.
 
+### Deal pipeline
+A dedicated `/pipeline` page turns DealMemo into a deal tracking system:
+- All researched companies in one filterable list: **All | Invested | Buy | Watch | Pass | Unreviewed**
+- Status is pre-populated from the AI verdict (Strong Buy → Buy, etc.) and editable inline via dropdown
+- Private notes field per deal — edit inline, saved on blur
+- Counts per status tab; click any row to open the full memo
+- Accessible via "Pipeline" in the nav (signed-in only)
+
 ### Session history sidebar
 After each memo completes it is automatically saved to a collapsible left sidebar. You can:
 - Browse previous companies without losing the current view
 - Click any past memo to read it in the main area
 - Re-research a company with one click (reload icon)
+- Status dot (colored) shown next to each company once tagged
 - Remove entries individually
+
+### PowerPoint export
+One-click export of any memo as a `.pptx` file:
+- **Export PPT** button appears in the memo toolbar once research finishes
+- Also available in the "Viewing" banner when browsing historical memos
+- Uses Vercel Blob for storage in production; direct binary download in dev
 
 ### Live agent step visibility
 While the agent runs you see each tool call inline — what it searched, which URLs it read, and when it switches to formatting. Steps collapse once the memo arrives.
@@ -50,7 +65,7 @@ Identical company lookups are served from cache instead of re-running the full r
 - Cache hits do not count against the rate limit
 
 ### Rate limiting
-5 memos per hour per IP address. Uses Upstash Redis in production with an in-memory fallback for local dev. Returns `429` with a `Retry-After` header when exceeded.
+7 memos per hour per IP address. Uses Upstash Redis in production with an in-memory fallback for local dev. Returns `429` with a `Retry-After` header when exceeded.
 
 ### Input validation & safety
 All incoming messages are sanitised: role allowlist, injection pattern detection, per-message length cap on user content.
@@ -131,8 +146,13 @@ components/
   Chat.tsx                # Session management, sidebar history, input bar
   MemoRenderer.tsx        # Streaming markdown → structured JSX + chart blocks
   FinancialPerformanceViz.tsx  # KPI cards, revenue line chart, funding bar chart
+  PipelineView.tsx        # Deal pipeline list — status, notes, filtering
+  ExportPptxButton.tsx    # One-click PowerPoint export
   DealMemoCard.tsx        # Collapsible structured memo sections
   AgentSteps.tsx          # Live tool call visibility
+
+app/
+  pipeline/page.tsx       # /pipeline route
 
 lib/
   schemas/
@@ -142,11 +162,14 @@ lib/
     webSearch.ts          # web_search tool (Tavily)
     fetchUrl.ts           # fetch_url tool (Jina Reader)
     formatMemo.ts         # format_memo tool (generateObject)
+  memoStore.ts            # Memo persistence + DealStatus + updateMemo
   memoCache.ts            # Server-side memo cache (Redis / in-memory)
   cachedMemoStream.ts     # Replay cached memo as a data stream
   parseFinancialSection.ts  # Extract dealmemo-finance blocks from markdown
+  parseVerdict.ts         # Map AI verdict text → DealStatus
+  pptxGenerator.ts        # Build pptxgenjs presentation from memo text
   observability.ts        # Request logging, cost estimation
-  rateLimit.ts            # IP-based rate limiting (5/hour)
+  rateLimit.ts            # IP-based rate limiting (7/hour)
   validation.ts           # Input sanitization, injection detection
 ```
 
